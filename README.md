@@ -12,7 +12,19 @@ It is a standalone, user-installable build of the in-tree adapter proposed upstr
 
 ## Install
 
-The Paperclip install route runs `npm install --no-save <packageName>` and then looks the package up by that exact name, so a git spec such as `github:bartekrozycki/copilot-paperclip-adapter` is **not** accepted by `POST /api/adapters/install` (verified by reading `server/src/routes/adapters.ts`). Use the local-path route. `dist/` is committed, so no build is required on the target machine (`npm install` is still needed for the `@paperclipai/adapter-utils` dependency):
+### Install from npm (recommended)
+
+```sh
+paperclipai adapter install --payload-json '{"packageName":"@bartekrozycki/copilot-paperclip-adapter"}'
+```
+
+Or in the UI: Settings -> Adapters -> install, enter `@bartekrozycki/copilot-paperclip-adapter` (leave the local path option off). To pin a version, add a `version` field (`'{"packageName":"@bartekrozycki/copilot-paperclip-adapter","version":"0.1.0"}'`) or enter `@bartekrozycki/copilot-paperclip-adapter@0.1.0`. Without `version` the latest release is installed.
+
+The install route runs `npm install --no-save <packageName>[@<version>]` inside `$PAPERCLIP_HOME/adapter-plugins` and then loads the package by that name (verified in `server/src/routes/adapters.ts`). Installing requires an instance admin. To update, reinstall (or pin a newer `version`) and run `paperclipai adapter reload copilot_local`.
+
+### Install from a local path (alternative)
+
+The install route looks the package up by its exact name, so a git spec such as `github:bartekrozycki/copilot-paperclip-adapter` is **not** accepted by `POST /api/adapters/install`. Use the local-path route instead. `dist/` is committed, so no build is required on the target machine (`npm install` is still needed for the `@paperclipai/adapter-utils` dependency):
 
 ```sh
 git clone https://github.com/bartekrozycki/copilot-paperclip-adapter.git
@@ -27,7 +39,7 @@ curl -X POST http://localhost:3100/api/adapters/install -H 'content-type: applic
   -d '{"packageName":"/abs/path/to/copilot-paperclip-adapter","isLocalPath":true}'
 ```
 
-Installing requires an instance admin. After rebuilding (`npm run build`) run `paperclipai adapter reload copilot_local`.
+After rebuilding (`npm run build`) run `paperclipai adapter reload copilot_local`.
 
 `npm install github:bartekrozycki/copilot-paperclip-adapter` also works in any directory (the `prepare` script builds it), which is handy for vendoring the package.
 

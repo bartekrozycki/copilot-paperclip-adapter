@@ -1,0 +1,54 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  id-token: write # npm trusted publishing (OIDC) + provenance
+  contents: write # GitHub Release
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: dist is up to date
+        run: git diff --exit-code -- dist
+      - name: Tag matches package.json version
+        run: |
+          pkg="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_NAME" != "$pkg" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $pkg" >&2
+            exit 1
+          fi
+      - name: Publish to npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # Fallback: use the NPM_TOKEN secret if set. Otherwise setup-node's placeholder
+          # NODE_AUTH_TOKEN stays and npm uses OIDC trusted publishing.
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "Publishing with NPM_TOKEN"
+            export NODE_AUTH_TOKEN="$NPM_TOKEN"
+          else
+            echo "Publishing with OIDC trusted publishing"
+          fi
+          npm publish --provenance --access public
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ver="${GITHUB_REF_NAME#v}"
+          awk -v v="$ver" '
+            /^## / { if (found) exit; if (index($0, "## " v) == 1) { found=1; next } }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          [ -s release-notes.md ] || echo "Release $GITHUB_REF_NAME" > release-notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md

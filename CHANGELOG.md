@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0
+## 0.1.0 (Unreleased, first npm publish)
 
 - Initial release of the `copilot_local` external adapter for Paperclip, ported from the in-tree adapter (upstream PR paperclipai/paperclip#15881).
 - Single-file ESM server bundle (`dist/index.js`) and import-free CJS transcript parser (`dist/ui-parser.cjs`).
