@@ -24,7 +24,7 @@ npm publish --access public   # prepublishOnly runs typecheck, tests and build
 
 (Local publishes cannot produce provenance; `publishConfig.provenance` only applies in supported CI. If npm refuses `provenance: true` locally, use `npm publish --access public --provenance=false`.)
 
-Then push the tag so a GitHub Release exists: `git tag v0.1.0 && git push origin v0.1.0` would re-run the workflow and fail on "version already published", so for the first version create the release manually: `gh release create v0.1.0 --notes-file <(awk '/^## 0.1.0/{f=1;next} /^## /{f=0} f' CHANGELOG.md)`.
+Then tag the published commit (`git tag v0.1.0 && git push origin v0.1.0`). The workflow skips `npm publish` when that version is already on npm and only creates the GitHub Release.
 
 ### Configure trusted publishing
 
